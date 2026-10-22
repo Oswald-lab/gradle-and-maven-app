@@ -20,6 +20,6 @@ tasks.withType(JavaCompile).configureEach {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'com.example.app.Main'
+        attributes 'Main-Class': 'com.example.app.LoginApplication'
     }
 }
