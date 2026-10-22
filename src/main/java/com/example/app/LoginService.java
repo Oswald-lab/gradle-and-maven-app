@@ -1,5 +1,7 @@
 package com.example.app;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,5 +23,13 @@ public class LoginService {
         return userRepository.findByEmail(email)
                 .filter(user -> PasswordHasher.matches(password, user.passwordHash()))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+    }
+
+    public Optional<User> findByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ValidationException("Email is required");
+        }
+
+        return userRepository.findByEmail(email);
     }
 }
