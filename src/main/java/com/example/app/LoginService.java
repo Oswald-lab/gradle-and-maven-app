@@ -32,4 +32,12 @@ public class LoginService {
 
         return userRepository.findByEmail(email);
     }
+
+    public Optional<User> findById(String id) {
+        if (id == null || id.isBlank()) {
+            throw new ValidationException("User id is required");
+        }
+
+        return userRepository.findById(id);
+    }
 }
