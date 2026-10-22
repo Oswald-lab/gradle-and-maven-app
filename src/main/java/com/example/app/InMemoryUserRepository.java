@@ -1,28 +1,33 @@
 package com.example.app;
 
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class InMemoryUserRepository implements UserRepository {
-
-    private final ConcurrentMap<String, UserAccount> users = new ConcurrentHashMap<>();
+public class InMemoryUserRepository {
+    private final Map<String, User> users = new ConcurrentHashMap<>();
 
     public InMemoryUserRepository() {
-        UserAccount demo = UserAccount.withPassword("demo@example.com", "Password123!");
-        users.put(demo.email(), demo);
+        save("demo@example.com", "Password123!");
     }
 
-    @Override
-    public Optional<UserAccount> findByEmail(String email) {
-        return Optional.ofNullable(users.get(email));
+    public void save(String email, String rawPassword) {
+        String normalizedEmail = normalize(email);
+        users.put(normalizedEmail, new User(normalizedEmail, PasswordHasher.hash(rawPassword)));
     }
 
-    @Override
-    public void save(UserAccount user) {
-        users.put(user.email(), user);
+    public Optional<User> findByEmail(String email) {
+        if (email == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(users.get(normalize(email)));
+    }
+
+    private String normalize(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

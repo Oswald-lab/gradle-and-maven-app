@@ -4,10 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 final class PasswordHasher {
-
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private PasswordHasher() {
@@ -16,23 +14,35 @@ final class PasswordHasher {
     static String newSalt() {
         byte[] salt = new byte[16];
         RANDOM.nextBytes(salt);
-        return Base64.getEncoder().encodeToString(salt);
+        return toHex(salt);
     }
 
-    static String hash(String password, String salt) {
+    static String hash(String rawPassword) {
+        return toHex(digest(rawPassword.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    static String hash(String rawPassword, String salt) {
+        return toHex(digest((salt + rawPassword).getBytes(StandardCharsets.UTF_8)));
+    }
+
+    static boolean matches(String rawPassword, String passwordHash) {
+        return hash(rawPassword).equalsIgnoreCase(passwordHash);
+    }
+
+    private static byte[] digest(byte[] input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(Base64.getDecoder().decode(salt));
-            byte[] hashed = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hashed);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available", e);
+            return digest.digest(input);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }
 
-    static boolean verify(String password, String salt, String expectedHash) {
-        byte[] actual = hash(password, salt).getBytes(StandardCharsets.UTF_8);
-        byte[] expected = expectedHash.getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(actual, expected);
+    private static String toHex(byte[] bytes) {
+        StringBuilder builder = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            builder.append(String.format("%02x", value));
+        }
+        return builder.toString();
     }
 }

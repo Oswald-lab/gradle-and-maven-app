@@ -5,81 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 4rem; }
-        form { display: flex; flex-direction: column; gap: 0.75rem; width: 20rem; }
-        label { font-weight: 600; }
-        input { padding: 0.5rem; }
-        .error { color: #b00020; min-height: 1.2rem; }
-        .field-error { color: #b00020; font-size: 0.85rem; }
-        button { padding: 0.6rem; cursor: pointer; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #ffffff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+            width: 320px;
+        }
+        h1 {
+            font-size: 22px;
+            margin-top: 0;
+            text-align: center;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #c5cdd6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 11px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2563eb;
+            color: #ffffff;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .error {
+            display: none;
+            margin-top: 16px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #fdecea;
+            color: #b42318;
+            font-size: 14px;
+        }
+        .error.visible {
+            display: block;
+        }
+        .hint {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #667085;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-<main>
-    <h1>Sign in</h1>
-    <form id="login-form" novalidate>
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" required>
-        <span class="field-error" id="email-error"></span>
+    <main class="card">
+        <h1>Sign in</h1>
+        <form id="login-form" novalidate>
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <span class="field-error" id="password-error"></span>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
 
-        <div class="error" id="form-error" role="alert"></div>
-        <button type="submit">Log in</button>
-    </form>
-</main>
-<script>
-    const form = document.getElementById('login-form');
-    const formError = document.getElementById('form-error');
-    const emailError = document.getElementById('email-error');
-    const passwordError = document.getElementById('password-error');
+            <div id="error" class="error" role="alert"></div>
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        formError.textContent = '';
-        emailError.textContent = '';
-        passwordError.textContent = '';
+            <button type="submit">Log in</button>
+        </form>
+        <p class="hint">Demo account: demo@example.com / Password123!</p>
+    </main>
 
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+    <script>
+        const form = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorBox = document.getElementById('error');
 
-        let valid = true;
-        if (!email) {
-            emailError.textContent = 'Email is required';
-            valid = false;
-        }
-        if (!password) {
-            passwordError.textContent = 'Password is required';
-            valid = false;
-        }
-        if (!valid) {
-            return;
+        function showError(message) {
+            errorBox.textContent = message;
+            errorBox.classList.add('visible');
         }
 
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json().catch(() => ({}));
+        function clearError() {
+            errorBox.textContent = '';
+            errorBox.classList.remove('visible');
+        }
 
-            if (response.ok) {
-                window.location.href = data.redirectUrl || '/home.html';
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearError();
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email) {
+                showError('Email is required');
+                emailInput.focus();
+                return;
+            }
+            if (!password) {
+                showError('Password is required');
+                passwordInput.focus();
                 return;
             }
 
-            if (data.fieldErrors) {
-                emailError.textContent = data.fieldErrors.email || '';
-                passwordError.textContent = data.fieldErrors.password || '';
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/home.html';
+                    return;
+                }
+
+                const data = await response.json().catch(() => ({}));
+                showError(data.error || 'Unable to log in right now. Please try again.');
+            } catch (error) {
+                showError('Unable to reach the server. Please try again.');
             }
-            formError.textContent = data.error || 'Unable to log in';
-        } catch (error) {
-            formError.textContent = 'Unable to log in. Please try again.';
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
