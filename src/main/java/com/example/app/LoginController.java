@@ -31,6 +31,18 @@ public class LoginController {
                 "email", user.email()));
     }
 
+    @PostMapping("/auth/login")
+    public ResponseEntity<Map<String, String>> authLogin(@RequestBody(required = false) LoginRequest request) {
+        String email = request == null ? null : request.email();
+        String password = request == null ? null : request.password();
+
+        User user = loginService.login(email, password);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Login successful",
+                "email", user.email()));
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, String>> handleValidation(ValidationException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
